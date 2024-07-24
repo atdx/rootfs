@@ -1,4 +1,4 @@
-name: Extract Rootfs
+name: Extract rootfs
 
 on:
   workflow_dispatch:
@@ -17,14 +17,23 @@ jobs:
       - name: Extract openwrt.img.xz
         run: xz -d openwrt.img.xz
         
-      - name: Extract rootfs
+      - name: Calculate size and seek offset
+        id: calculate
+        run: |
+          img_size=$(stat --format=%s openwrt.img)
+          fs_start=$(fdisk -l openwrt.img | grep Linux | awk '{print $2}')
+          echo "::set-output name=img_size::$img_size"
+          echo "::set-output name=fs_start::${fs_start}s"
+
+      - name: Extract rootfs using dd
         run: |
           mkdir rootfs
-          sudo mount -o loop,offset=1048576 openwrt.img rootfs
+          sudo dd if=openwrt.img of=rootfs/rootfs.ext4 bs=512 skip=${{ steps.calculate.outputs.fs_start }} count=$(((${{ steps.calculate.outputs.img_size }}-${{ steps.calculate.outputs.fs_start }})*2))
+          sudo mount rootfs/rootfs.ext4 rootfs
           sudo tar czf rootfs.tar.gz -C rootfs .
           sudo umount rootfs
           rmdir rootfs
-      
+
       - name: Upload rootfs.tar.gz artifact
         uses: actions/upload-artifact@v2
         with:
