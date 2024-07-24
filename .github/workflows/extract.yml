@@ -21,14 +21,14 @@ jobs:
         id: calculate
         run: |
           img_size=$(stat --format=%s openwrt.img)
-          fs_start=$(fdisk -l openwrt.img | grep Linux | awk '{print $2}')
+          fs_start=$(fdisk -l openwrt.img | grep Linux | awk '{print $2}' | tr -d 's')
           echo "::set-output name=img_size::$img_size"
-          echo "::set-output name=fs_start::${fs_start}s"
+          echo "::set-output name=fs_start::$fs_start"
 
       - name: Extract rootfs using dd
         run: |
           mkdir rootfs
-          sudo dd if=openwrt.img of=rootfs/rootfs.ext4 bs=512 skip=${{ steps.calculate.outputs.fs_start }} count=$(((${{ steps.calculate.outputs.img_size }}-${{ steps.calculate.outputs.fs_start }})*2))
+          sudo dd if=openwrt.img of=rootfs/rootfs.ext4 bs=512 skip=${{ steps.calculate.outputs.fs_start }} count=$(((${{ steps.calculate.outputs.img_size }}-${{ steps.calculate.outputs.fs_start }})*2))     
       
       - name: Mount rootfs
         run: |
