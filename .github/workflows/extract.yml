@@ -42,8 +42,6 @@ jobs:
       - name: Unmount rootfs
         run: |
           sudo umount /mnt/rootfs
-          sudo rmdir /mnt/rootfs
-          sudo rmdir rootfs
 
       - name: Upload rootfs.tar.gz artifact
         uses: actions/upload-artifact@v2
