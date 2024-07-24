@@ -1,0 +1,41 @@
+name: Ambil rootfs.tar.gz dari OpenWrt.img.gz
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Set up QEMU
+        run: |
+          sudo apt-get update && sudo apt-get install -y qemu
+
+      - name: Unduh image OpenWrt
+        env:
+          OPENWRT_DOWNLOAD_URL: "https://downloads.openwrt.org/releases/21.02.1/targets/generic-x86-64/openwrt-21.02.1-generic-x86-64.img.gz"
+        run: |
+          wget ${OPENWRT_DOWNLOAD_URL}
+
+      - name: Ekstrak image OpenWrt
+        run: |
+          qemu-img info openwrt-21.02.1-generic-x86-64.img.gz | grep "Filesystem" | cut -d ':' -f 2 | xargs qemu-img convert -f qcow2 -O raw openwrt.img openwrt.img
+
+      - name: Ambil rootfs.tar.gz
+        run: |
+          mkdir rootfs
+          mount -o loop openwrt.img rootfs
+          tar -xf rootfs/overlay/rootfs.tar.gz -C rootfs
+          umount rootfs
+          rm openwrt.img
+
+      - name: Upload rootfs.tar.gz ke artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: rootfs
+          path: rootfs/rootfs.tar.gz
