@@ -42,7 +42,7 @@ jobs:
 
       - name: Create rootfs.tar.gz
         run: |
-          sudo tar czf -C /mnt/rootfs . --level 9 > rootfs.tar.gz
+          sudo tar czf rootfs.tar.gz -C /mnt/rootfs .
 
       - name: Unmount rootfs
         run: |
