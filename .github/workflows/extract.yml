@@ -1,4 +1,4 @@
- name: Extract rootfs
+name: Extract rootfs
 
 on:
   workflow_dispatch:
