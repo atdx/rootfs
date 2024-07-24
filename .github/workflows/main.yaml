@@ -19,7 +19,7 @@ jobs:
 
       - name: Download openwrt.img.gz
         run: |
-          wget https://your-openwrt-url.com/openwrt.img.gz
+          wget https://atdxcdn.eu.org/0:/Opiz3/fri_openwrt-23.05.3-h618-6.1.31-sun50iw9.img.gz
 
       - name: Extract rootfs
         run: |
