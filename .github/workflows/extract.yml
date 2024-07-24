@@ -1,4 +1,4 @@
-name: Extract rootfs.tar.gz for SD card from openwrt.img.gz
+name: Extract rootfs
 
 on:
   workflow_dispatch:
