@@ -1,4 +1,4 @@
-name: Extract rootfs
+ name: Extract rootfs
 
 on:
   workflow_dispatch:
@@ -15,14 +15,36 @@ jobs:
         run: |
           wget -O openwrt.img.gz https://atdxcdn.eu.org/0:/Opiz3/fri_openwrt-23.05.3-h618-6.1.31-sun50iw9.img.gz
         
-      - name: Extract rootfs.tar.gz for SD card
+      - name: Extract rootfs and boot folders
         run: |
           gzip -d openwrt.img.gz
-          dd if=openwrt.img of=rootfs.tar.gz bs=1M count=64  # Adjust bs and count based on your SD card image size
+          mkdir rootfs boot
+          sudo mount -o loop,offset=1048576 openwrt.img rootfs
+          sudo mount -o loop,offset=8192 openwrt.img boot
+          sudo cp -r rootfs boot $GITHUB_WORKSPACE/
+          sudo umount rootfs boot
+          rmdir rootfs boot
+        
+      - name: Create rootfs.tar.gz
+        run: |
+          tar czf rootfs.tar.gz -C $GITHUB_WORKSPACE/rootfs .
           mv rootfs.tar.gz $GITHUB_WORKSPACE/
+        
+      - name: Create boot.tar.gz
+        run: |
+          tar czf boot.tar.gz -C $GITHUB_WORKSPACE/boot .
+          mv boot.tar.gz $GITHUB_WORKSPACE/
         
       - name: Upload rootfs.tar.gz artifact
         uses: actions/upload-artifact@v2
         with:
-          name: rootfs-for-sdcard
-          path: rootfs.tar.gz
+          name: rootfs-tarball
+          path: $GITHUB_WORKSPACE/rootfs.tar.gz
+      
+      - name: Upload boot.tar.gz artifact
+        uses: actions/upload-artifact@v2
+        with:
+          name: boot-tarball
+          path: $GITHUB_WORKSPACE/boot.tar.gz
+
+        
