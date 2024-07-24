@@ -1,0 +1,32 @@
+name: Extract OpenWrt Rootfs
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  extract:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Set up Git credentials
+        uses: actions/setup-git@v4
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Download openwrt.img.gz
+        run: |
+          wget https://your-openwrt-url.com/openwrt.img.gz
+
+      - name: Extract rootfs
+        run: |
+          bash ./extract-rootfs.sh
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: rootfs
+          path: rootfs
