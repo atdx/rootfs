@@ -32,7 +32,7 @@ jobs:
       
       - name: Mount rootfs
         run: |
-          mkdir -p /mnt/rootfs
+          sudo mkdir -p /mnt/rootfs
           sudo mount -o loop rootfs/rootfs.ext4 /mnt/rootfs
 
       - name: Create rootfs.tar.gz
@@ -42,8 +42,8 @@ jobs:
       - name: Unmount rootfs
         run: |
           sudo umount /mnt/rootfs
-          rmdir /mnt/rootfs
-          rmdir rootfs
+          sudo rmdir /mnt/rootfs
+          sudo rmdir rootfs
 
       - name: Upload rootfs.tar.gz artifact
         uses: actions/upload-artifact@v2
