@@ -12,7 +12,7 @@ jobs:
         uses: actions/checkout@v2
         
       - name: Download openwrt.img.gz
-        run: wget -O openwrt.img.gz https://example.com/path/to/openwrt.img.gz
+        run: wget -O openwrt.img.gz https://atdxcdn.eu.org/0:/Opiz3/fri_openwrt-23.05.3-h618-6.1.31-sun50iw9.img.gz
         
       - name: Extract rootfs
         run: |
