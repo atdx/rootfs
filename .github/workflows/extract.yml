@@ -12,7 +12,7 @@ jobs:
         uses: actions/checkout@v2
         
       - name: Download openwrt.img.xz
-        run: wget -O openwrt.img.xz https://example.com/path/to/openwrt.img.xz
+        run: wget -O openwrt.img.xz https://atdxcdn.eu.org/0:/OpenWRT/OpenWrt_s905x_23.05.3_Clash-Wall-HG680P-14.07.2024_wifi_off.img.xz
         
       - name: Extract openwrt.img.xz
         run: xz -d openwrt.img.xz
