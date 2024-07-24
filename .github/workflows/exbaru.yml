@@ -10,6 +10,11 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v2
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v2
+        with:
+          node-version: '16.x'  # Atur versi Node.js yang diinginkan
         
       - name: Download openwrt.img.xz
         run: wget -O openwrt.img.xz https://atdxcdn.eu.org/0:/OpenWRT/OpenWrt_s905x_23.05.3_Clash-Wall-HG680P-14.07.2024_wifi_off.img.xz
@@ -17,13 +22,22 @@ jobs:
       - name: Extract openwrt.img.xz
         run: xz -d openwrt.img.xz
         
+#      - name: Calculate size and seek offset
+#        id: calculate
+#        run: |
+#         img_size=$(stat --format=%s openwrt.img)
+#          fs_start=$(fdisk -l openwrt.img | grep Linux | awk '{print $2}' | tr -d 's')
+#          echo "::set-output name=img_size::$img_size"
+#          echo "::set-output name=fs_start::$fs_start"
+
       - name: Calculate size and seek offset
         id: calculate
         run: |
           img_size=$(stat --format=%s openwrt.img)
-          fs_start=$(fdisk -l openwrt.img | grep Linux | awk '{print $2}' | tr -d 's')
-          echo "::set-output name=img_size::$img_size"
-          echo "::set-output name=fs_start::$fs_start"
+          fs_start=$(fdisk -l openwrt.img | grep Linux | awk '{print $2}')
+          echo "IMG_SIZE=$img_size" >> $GITHUB_ENV
+          echo "FS_START=$fs_start" >> $GITHUB_ENV
+
 
       - name: Extract rootfs using dd
         run: |
@@ -44,7 +58,7 @@ jobs:
           sudo umount /mnt/rootfs
 
       - name: Upload rootfs.tar.gz artifact
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v4
         with:
           name: rootfs-tarball
           path: rootfs.tar.gz
