@@ -1,0 +1,31 @@
+name: Extract Rootfs
+
+on:
+  workflow_dispatch:
+
+jobs:
+  extract:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+        
+      - name: Download openwrt.img.gz
+        run: |
+          wget -O openwrt.img.gz https://atdxcdn.eu.org/0:/Opiz3/fri_openwrt-23.05.3-h618-6.1.31-sun50iw9.img.gz
+        
+      - name: Extract rootfs.tar.gz
+        run: |
+          gzip -d openwrt.img.gz
+          binwalk -e openwrt.img
+          mv _openwrt.img.extracted/squashfs-rootfs.img rootfs.img
+          unsquashfs rootfs.img
+          mv squashfs-rootfs/* $GITHUB_WORKSPACE/
+          tar czvf rootfs.tar.gz .
+        
+      - name: Upload rootfs.tar.gz artifact
+        uses: actions/upload-artifact@v2
+        with:
+          name: rootfs
+          path: rootfs.tar.gz
