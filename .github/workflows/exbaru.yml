@@ -34,9 +34,9 @@ jobs:
         id: calculate
         run: |
           img_size=$(stat --format=%s openwrt.img)
-          fs_start=$(fdisk -l openwrt.img | grep Linux | awk '{print $2}' | tr -d 's')
-          echo "IMG_SIZE=$img_size" >> $GITHUB_ENV
-          echo "FS_START=$fs_start" >> $GITHUB_ENV
+            fs_start=$(fdisk -l openwrt.img | grep Linux | awk '{print $2}' | tr -d 's')
+            echo "IMG_SIZE=$img_size" >> $GITHUB_ENV
+            echo "FS_START=$fs_start" >> $GITHUB_ENV
 
 
       - name: Extract rootfs using dd
