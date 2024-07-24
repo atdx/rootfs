@@ -1,4 +1,4 @@
-name: Extract rootfs
+name: Extract Rootfs
 
 on:
   workflow_dispatch:
@@ -11,14 +11,16 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v2
         
-      - name: Download openwrt.img.gz
-        run: wget -O openwrt.img.gz https://atdxcdn.eu.org/0:/Opiz3/fri_openwrt-23.05.3-h618-6.1.31-sun50iw9.img.gz
+      - name: Download openwrt.img.xz
+        run: wget -O openwrt.img.xz https://atdxcdn.eu.org/0:/OpenWRT/OpenWrt_s905x_23.05.3_Clash-Wall-HG680P-14.07.2024_wifi_off.img.xz
+        
+      - name: Extract openwrt.img.xz
+        run: xz -d openwrt.img.xz
         
       - name: Extract rootfs
         run: |
-          gzip -d openwrt.img.gz
           mkdir rootfs
-          sudo mount -t ext4 -o loop,offset=1048576 openwrt.img rootfs
+          sudo mount -o loop,offset=1048576 openwrt.img rootfs
           sudo tar czf rootfs.tar.gz -C rootfs .
           sudo umount rootfs
           rmdir rootfs
