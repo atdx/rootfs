@@ -44,8 +44,8 @@ jobs:
                     "https://www.googleapis.com/drive/v3/files/${FILE_ID}?fields=name")
         FILE_NAME=$(echo "${METADATA}" | jq -r '.name')
 
-        # Hapus ekstensi file
-        BASE_NAME=$(basename "${FILE_NAME}" | sed 's/\.[^.]*$//')
+        # Hapus ekstensi .img.xz
+        BASE_NAME=$(echo "${FILE_NAME}" | sed 's/\.[^.]*$//' | sed 's/\.[^.]*$//')
 
         # Atur variabel lingkungan untuk nama file tanpa ekstensi
         echo "FILE_NAME=${BASE_NAME}" >> $GITHUB_ENV
@@ -74,7 +74,7 @@ jobs:
       run: |
         sudo mkdir /mnt/rootfs
         sudo mount -o loop rootfs.img /mnt/rootfs
-        sudo tar -czvf "${BASE_NAME}-rootfs.tar.gz" -C /mnt/rootfs .
+        sudo tar -czvf "${FILE_NAME}-rootfs.tar.gz" -C /mnt/rootfs .
         sudo umount /mnt/rootfs
 
     - name: Upload rootfs.tar.gz to Google Drive
@@ -83,7 +83,7 @@ jobs:
       run: |
         # ID folder Google Drive untuk mengupload file
         PARENT_FOLDER_ID="1YHEODaFpIJbrsnuu2SoWgqSjrZPkTVzB"
-        FILE_NAME="${BASE_NAME}-rootfs.tar.gz"
+        FILE_NAME="${FILE_NAME}-rootfs.tar.gz"
           
         # Upload file ke Google Drive
         curl -X POST -L \
