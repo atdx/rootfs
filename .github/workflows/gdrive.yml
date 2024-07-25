@@ -20,7 +20,7 @@ jobs:
       run: |
         FILE_ID="1LPzDblSeEZN-vUHh029AffkFCdffc78r"
         FILE_NAME="openwrt.img.xz"
-        wget --no-check-certificate "https://drive.usercontent.google.com/download?id=${FILE_ID}&export=download" -O ${FILE_NAME}
+        wget --no-check-certificate "https://drive.usercontent.google.com/download?id=${FILE_ID}&export=download&authuser=1" -O ${FILE_NAME}
 
     - name: Extract OpenWRT image
       run: xz -d openwrt.img.xz
