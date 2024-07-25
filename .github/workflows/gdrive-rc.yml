@@ -32,21 +32,21 @@ jobs:
           -H "Authorization: Bearer $GDRIVE_TOKEN" \
           $DOWNLOAD_URL
 
-      - name: Get file metadata
-        id: metadata
-        env:
-          GDRIVE_TOKEN: ${{ secrets.GDRIVE_TOKEN }} # Token akses Google Drive Anda
-        run: |
-          FILE_ID="1LPzDblSeEZN-vUHh029AffkFCdffc78r" # Ganti dengan ID file Google Drive Anda
+    - name: Get file metadata
+      id: metadata
+      env:
+        GDRIVE_TOKEN: ${{ secrets.GDRIVE_TOKEN }} # Token akses Google Drive Anda
+      run: |
+        FILE_ID="1LPzDblSeEZN-vUHh029AffkFCdffc78r" # Ganti dengan ID file Google Drive Anda
 
-          # Ambil metadata file
-          METADATA=$(curl -s -H "Authorization: Bearer ${GDRIVE_TOKEN}" \
-                          "https://www.googleapis.com/drive/v3/files/${FILE_ID}?fields=name")
-          FILE_NAME=$(echo "${METADATA}" | jq -r '.name')
-          echo "FILE_NAME=${FILE_NAME}" >> $GITHUB_ENV
+        # Ambil metadata file
+        METADATA=$(curl -s -H "Authorization: Bearer ${GDRIVE_TOKEN}" \
+                        "https://www.googleapis.com/drive/v3/files/${FILE_ID}?fields=name")
+        FILE_NAME=$(echo "${METADATA}" | jq -r '.name')
+        echo "FILE_NAME=${FILE_NAME}" >> $GITHUB_ENV
 
-          # Debug: Tampilkan nama file dari metadata
-          echo "File name from metadata: ${FILE_NAME}"
+        # Debug: Tampilkan nama file dari metadata
+        echo "File name from metadata: ${FILE_NAME}"
 
     - name: Extract OpenWRT image
       run: xz -d openwrt.img.xz
