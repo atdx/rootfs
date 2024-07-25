@@ -54,7 +54,7 @@ jobs:
         env:
           GOOGLE_DRIVE_TOKEN: ${{ secrets.GOOGLE_DRIVE_TOKEN }} # Token akses Google Drive Anda
         run: |
-          FILE_ID="your_google_drive_file_id" # Ganti dengan ID file Google Drive Anda
+          FILE_ID="1LPzDblSeEZN-vUHh029AffkFCdffc78r" # Ganti dengan ID file Google Drive Anda
 
           # Ambil metadata file
           METADATA=$(curl -s -H "Authorization: Bearer ${GOOGLE_DRIVE_TOKEN}" \
