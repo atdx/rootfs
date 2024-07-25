@@ -1,0 +1,64 @@
+name: Rootfs Gdrive
+
+on:
+  workflow_dispatch:
+
+jobs:
+  extract-rootfs:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v2
+
+    - name: Install required tools
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y wget xz-utils fdisk
+
+    - name: Download OpenWRT image from Google Drive
+      run: |
+        FILE_ID="<YOUR_FILE_ID>"
+        FILE_NAME="openwrt.img.xz"
+        wget --no-check-certificate "https://drive.google.com/uc?export=download&id=${FILE_ID}" -O ${FILE_NAME}
+
+    - name: Extract OpenWRT image
+      run: xz -d openwrt.img.xz
+
+    - name: Find rootfs partition offset
+      id: find-offset
+      run: |
+        # Find the offset of the rootfs partition
+        ROOTFS_OFFSET=$(fdisk -l openwrt.img | grep Linux | awk '{print $2}')
+        echo "ROOTFS_OFFSET=$ROOTFS_OFFSET" >> $GITHUB_ENV
+
+    - name: Extract rootfs using dd
+      run: |
+        # Convert the offset to bytes (assuming sector size is 512 bytes)
+        OFFSET_BYTES=$(($ROOTFS_OFFSET * 512))
+        # Extract the rootfs partition
+        dd if=openwrt.img bs=512 skip=$ROOTFS_OFFSET of=rootfs.img
+
+    - name: Mount the rootfs image and create tar.gz
+      run: |
+        sudo mkdir /mnt/rootfs
+        sudo mount -o loop rootfs.img /mnt/rootfs
+        sudo tar -czvf rootfs.tar.gz -C /mnt/rootfs .
+        sudo umount /mnt/rootfs
+
+    - name: Upload rootfs.tar.gz to Google Drive
+      env:
+        GDRIVE_TOKEN: ${{ secrets.GDRIVE_TOKEN }}
+      run: |
+        pip install --upgrade google-api-python-client google-auth-httplib2 google-auth-oauthlib
+        echo "from google.oauth2 import service_account" > upload_to_drive.py
+        echo "from googleapiclient.discovery import build" >> upload_to_drive.py
+        echo "from googleapiclient.http import MediaFileUpload" >> upload_to_drive.py
+        echo "import json" >> upload_to_drive.py
+        echo "scopes = ['https://www.googleapis.com/auth/drive.file']" >> upload_to_drive.py
+        echo "creds = service_account.Credentials.from_service_account_info(json.loads('${{ secrets.GDRIVE_TOKEN }}'), scopes=scopes)" >> upload_to_drive.py
+        echo "service = build('drive', 'v3', credentials=creds)" >> upload_to_drive.py
+        echo "file_metadata = {'name': 'rootfs.tar.gz'}" >> upload_to_drive.py
+        echo "media = MediaFileUpload('rootfs.tar.gz', mimetype='application/gzip')" >> upload_to_drive.py
+        echo "file = service.files().create(body=file_metadata, media_body=media, fields='id').execute()" >> upload_to_drive.py
+        python upload_to_drive.py
