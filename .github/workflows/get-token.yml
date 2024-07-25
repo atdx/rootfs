@@ -1,4 +1,4 @@
-name: Get Google Drive Token
+name: Get
 
 on:
   workflow_dispatch:
