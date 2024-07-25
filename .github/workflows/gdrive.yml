@@ -60,15 +60,13 @@ jobs:
       env:
         GDRIVE_TOKEN: ${{ secrets.GDRIVE_TOKEN }}
       run: |
-        pip install --upgrade google-api-python-client google-auth-httplib2 google-auth-oauthlib
-        echo "from google.oauth2 import service_account" > upload_to_drive.py
-        echo "from googleapiclient.discovery import build" >> upload_to_drive.py
-        echo "from googleapiclient.http import MediaFileUpload" >> upload_to_drive.py
-        echo "import json" >> upload_to_drive.py
-        echo "scopes = ['https://www.googleapis.com/auth/drive.file']" >> upload_to_drive.py
-        echo "creds = service_account.Credentials.from_service_account_info(json.loads('${{ secrets.GDRIVE_TOKEN }}'), scopes=scopes)" >> upload_to_drive.py
-        echo "service = build('drive', 'v3', credentials=creds)" >> upload_to_drive.py
-        echo "file_metadata = {'name': 'rootfs.tar.gz'}" >> upload_to_drive.py
-        echo "media = MediaFileUpload('rootfs.tar.gz', mimetype='application/gzip')" >> upload_to_drive.py
-        echo "file = service.files().create(body=file_metadata, media_body=media, fields='id').execute()" >> upload_to_drive.py
-        python upload_to_drive.py
+        # ID folder Google Drive untuk mengupload file
+        PARENT_FOLDER_ID="1YHEODaFpIJbrsnuu2SoWgqSjrZPkTVzB"
+        FILE_NAME="rootfs.tar.gz"
+          
+        # Upload file ke Google Drive
+        curl -X POST -L \
+          -H "Authorization: Bearer $GOOGLE_DRIVE_ACCESS_TOKEN" \
+          -F "metadata={name : '$FILE_NAME', parents : ['$PARENT_FOLDER_ID']};type=application/json;charset=UTF-8" \
+          -F "file=@$FILE_NAME;type=application/octet-stream" \
+          "https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart"
