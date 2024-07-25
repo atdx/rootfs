@@ -1,86 +1,82 @@
-name: Rootfs Gdrive beta
+name: Rootfs GDrive V2
 
 on:
-  workflow_dispatch:
+  workflow_dispatch: # Memungkinkan Anda untuk memicu workflow secara manual
 
 jobs:
-  extract-rootfs:
+  process_file:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout repository
-      uses: actions/checkout@v2
+      - name: Checkout repository
+        uses: actions/checkout@v3
 
-    - name: Install required tools
-      run: |
-        sudo apt-get update
-        sudo apt-get install -y wget xz-utils fdisk
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y jq xz-utils dosfstools gzip
 
-    - name: Download file metadata from Google Drive
-      id: get_metadata
-      env:
-        GDRIVE_TOKEN: ${{ secrets.GDRIVE_TOKEN }}
-      run: |
-        # ID file Google Drive untuk diunduh
-        FILE_ID="1LPzDblSeEZN-vUHh029AffkFCdffc78r"
+      - name: Download file from Google Drive
+        id: download
+        env:
+          GOOGLE_DRIVE_ACCESS_TOKEN: ${{ secrets.GOOGLE_DRIVE_ACCESS_TOKEN }}
+        run: |
+          # ID file Google Drive untuk diunduh
+          FILE_ID="1LPzDblSeEZN-vUHh029AffkFCdffc78r"
           
-        # Mendapatkan metadata file dari Google Drive
-        RESPONSE=$(curl -s -H "Authorization: Bearer $GDRIVE_TOKEN" "https://www.googleapis.com/drive/v3/files/${FILE_ID}?fields=name")
-        FILE_NAME=$(echo $RESPONSE | jq -r '.name')
-
-        # Simpan nama file ke GitHub Actions output
-        echo "FILE_NAME=$FILE_NAME" >> $GITHUB_ENV
-
-    - name: Download file from Google Drive
-      env:
-        GDRIVE_TOKEN: ${{ secrets.GDRIVE_TOKEN }}
-      run: |
-        # Menggunakan nama file dari langkah sebelumnya
-        FILE_NAME="${{ env.FILE_NAME }}"
+          # Mendapatkan metadata file dari Google Drive untuk mengambil nama file asli
+          RESPONSE=$(curl -s -H "Authorization: Bearer $GOOGLE_DRIVE_ACCESS_TOKEN" "https://www.googleapis.com/drive/v3/files/${FILE_ID}?fields=name")
+          FILE_NAME=$(echo $RESPONSE | jq -r '.name')
           
-          # URL untuk mengunduh file
+          # Unduh file dengan nama asli
           DOWNLOAD_URL="https://www.googleapis.com/drive/v3/files/${FILE_ID}?alt=media"
+          curl -L -o $FILE_NAME -H "Authorization: Bearer $GOOGLE_DRIVE_ACCESS_TOKEN" $DOWNLOAD_URL
+
+      - name: Extract file and prepare rootfs
+        run: |
+          # Ekstrak file jika perlu
+          if [[ $FILE_NAME == *.xz ]]; then
+            xz -d $FILE_NAME
+            FILE_NAME="${FILE_NAME%.xz}"
+          elif [[ $FILE_NAME == *.gz ]]; then
+            gunzip $FILE_NAME
+            FILE_NAME="${FILE_NAME%.gz}"
+          fi
           
-          # Mengunduh file dengan nama asli
-          curl -L -o $FILE_NAME \
-            -H "Authorization: Bearer $GDRIVE_TOKEN" \
-            $DOWNLOAD_URL
-
-    - name: Extract OpenWRT image
-      run: xz -d $FILE_NAME
-
-    - name: Find rootfs partition offset
-      id: find-offset
-      run: |
-        # Find the offset of the rootfs partition
-        ROOTFS_OFFSET=$(fdisk -l openwrt.img | grep Linux | awk '{print $2}')
-        echo "ROOTFS_OFFSET=$ROOTFS_OFFSET" >> $GITHUB_ENV
-
-    - name: Extract rootfs using dd
-      run: |
-        # Convert the offset to bytes (assuming sector size is 512 bytes)
-        OFFSET_BYTES=$(($ROOTFS_OFFSET * 512))
-        # Extract the rootfs partition
-        dd if=openwrt.img bs=512 skip=$ROOTFS_OFFSET of=rootfs.img
-
-    - name: Mount the rootfs image and create tar.gz
-      run: |
-        sudo mkdir /mnt/rootfs
-        sudo mount -o loop rootfs.img /mnt/rootfs
-        sudo tar -czvf $FILE_NAME-rootfs.tar.gz -C /mnt/rootfs .
-        sudo umount /mnt/rootfs
-
-    - name: Upload $rootfs.tar.gz to Google Drive
-      env:
-        GDRIVE_TOKEN: ${{ secrets.GDRIVE_TOKEN }}
-      run: |
-        # ID folder Google Drive untuk mengupload file
-        PARENT_FOLDER_ID="1YHEODaFpIJbrsnuu2SoWgqSjrZPkTVzB"
-        FILE_NAME="$FILE_NAME-rootfs.tar.gz"
+          # Tentukan nama file .img setelah diekstrak
+          IMG_FILE=$FILE_NAME
           
-        # Upload file ke Google Drive
-        curl -X POST -L \
-          -H "Authorization: Bearer $GDRIVE_TOKEN" \
-          -F "metadata={name : '$FILE_NAME', parents : ['$PARENT_FOLDER_ID']};type=application/json;charset=UTF-8" \
-          -F "file=@$FILE_NAME;type=application/octet-stream" \
-          "https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart"
+          # Tentukan nama file rootfs
+          ROOTFS_FILE="${FILE_NAME%.img}-rootfs.img"
+          
+          # Gunakan dd untuk mengekstrak partisi rootfs
+          # Asumsi partisi rootfs ada di offset 2048 (ubah sesuai kebutuhan)
+          OFFSET=$((2048 * 512)) # Offset dalam byte
+          
+          dd if=$IMG_FILE of=$ROOTFS_FILE bs=512 skip=$((OFFSET / 512))
+          
+          # Ekstrak rootfs jika diperlukan
+          mkdir -p /mnt/rootfs
+          sudo mount -o loop $ROOTFS_FILE /mnt/rootfs
+          
+          # Kompres rootfs menjadi <nama-file>-rootfs.tar.gz
+          tar -czf ${FILE_NAME%.img}-rootfs.tar.gz -C /mnt/rootfs .
+          
+          # Unmount dan bersihkan
+          sudo umount /mnt/rootfs
+          rmdir /mnt/rootfs
+
+      - name: Upload rootfs.tar.gz to Google Drive
+        env:
+          GOOGLE_DRIVE_ACCESS_TOKEN: ${{ secrets.GOOGLE_DRIVE_ACCESS_TOKEN }}
+        run: |
+          # ID folder Google Drive untuk mengupload file
+          PARENT_FOLDER_ID="1YHEODaFpIJbrsnuu2SoWgqSjrZPkTVzB"
+          FILE_NAME="${FILE_NAME%.img}-rootfs.tar.gz"
+          
+          # Upload file ke Google Drive
+          curl -X POST -L \
+            -H "Authorization: Bearer $GOOGLE_DRIVE_ACCESS_TOKEN" \
+            -F "metadata={name : '$FILE_NAME', parents : ['$PARENT_FOLDER_ID']};type=application/json;charset=UTF-8" \
+            -F "file=@$FILE_NAME;type=application/gzip" \
+            "https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart"
