@@ -1,4 +1,4 @@
-name: Extract rootfsX
+name: Rootfs Extractor Old
 
 on:
   workflow_dispatch:
