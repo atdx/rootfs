@@ -62,10 +62,6 @@ jobs:
           # Kompres rootfs menjadi <nama-file>-rootfs.tar.gz
           tar -czf ${FILE_NAME%.img}-rootfs.tar.gz -C /mnt/rootfs .
           
-          # Unmount dan bersihkan
-          sudo umount /mnt/rootfs
-          rmdir /mnt/rootfs
-
       - name: Upload rootfs.tar.gz to Google Drive
         env:
           GOOGLE_DRIVE_ACCESS_TOKEN: ${{ secrets.GOOGLE_DRIVE_ACCESS_TOKEN }}
