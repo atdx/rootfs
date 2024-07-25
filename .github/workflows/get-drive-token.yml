@@ -1,0 +1,76 @@
+name: Get Google Drive Token
+
+on:
+  workflow_dispatch:
+
+jobs:
+  get-token:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.x'
+
+      - name: Install dependencies
+        run: |
+          pip install google-auth google-auth-oauthlib google-auth-httplib2 google-api-python-client
+
+      - name: Generate authorization URL
+        id: generate-url
+        run: |
+          echo "from google_auth_oauthlib.flow import InstalledAppFlow" > generate_url.py
+          echo "import json" >> generate_url.py
+          echo "import os" >> generate_url.py
+          echo "client_config = {" >> generate_url.py
+          echo "  'installed': {" >> generate_url.py
+          echo "    'client_id': os.getenv('GDRIVE_CLIENT_ID')," >> generate_url.py
+          echo "    'client_secret': os.getenv('GDRIVE_CLIENT_SECRET')," >> generate_url.py
+          echo "    'redirect_uris': ['urn:ietf:wg:oauth:2.0:oob', 'http://localhost']" >> generate_url.py
+          echo "  }" >> generate_url.py
+          echo "}" >> generate_url.py
+          echo "flow = InstalledAppFlow.from_client_config(client_config, ['https://www.googleapis.com/auth/drive.file'])" >> generate_url.py
+          echo "auth_url, _ = flow.authorization_url(prompt='consent')" >> generate_url.py
+          echo "with open('auth_url.txt', 'w') as f:" >> generate_url.py
+          echo "  f.write(auth_url)" >> generate_url.py
+          python generate_url.py
+        env:
+          GDRIVE_CLIENT_ID: ${{ secrets.GDRIVE_CLIENT_ID }}
+          GDRIVE_CLIENT_SECRET: ${{ secrets.GDRIVE_CLIENT_SECRET }}
+
+      - name: Display authorization URL
+        run: |
+          cat auth_url.txt
+          echo "::set-output name=auth_url::$(cat auth_url.txt)"
+        id: display-auth-url
+
+      - name: Wait for authorization code
+        id: wait-for-auth-code
+        run: read -p "Enter the authorization code: " auth_code && echo "::set-output name=auth_code::$auth_code"
+        shell: bash
+
+      - name: Exchange authorization code for tokens
+        run: |
+          echo "from google_auth_oauthlib.flow import InstalledAppFlow" > exchange_code.py
+          echo "import json" >> exchange_code.py
+          echo "import os" >> exchange_code.py
+          echo "client_config = {" >> exchange_code.py
+          echo "  'installed': {" >> exchange_code.py
+          echo "    'client_id': os.getenv('GDRIVE_CLIENT_ID')," >> exchange_code.py
+          echo "    'client_secret': os.getenv('GDRIVE_CLIENT_SECRET')," >> exchange_code.py
+          echo "    'redirect_uris': ['urn:ietf:wg:oauth:2.0:oob', 'http://localhost']" >> exchange_code.py
+          echo "  }" >> exchange_code.py
+          echo "}" >> exchange_code.py
+          echo "flow = InstalledAppFlow.from_client_config(client_config, ['https://www.googleapis.com/auth/drive.file'])" >> exchange_code.py
+          echo "flow.fetch_token(code=os.getenv('AUTH_CODE'))" >> exchange_code.py
+          echo "creds = flow.credentials" >> exchange_code.py
+          echo "print('Access Token:', creds.token)" >> exchange_code.py
+          echo "print('Refresh Token:', creds.refresh_token)" >> exchange_code.py
+          python exchange_code.py
+        env:
+          GDRIVE_CLIENT_ID: ${{ secrets.GDRIVE_CLIENT_ID }}
+          GDRIVE_CLIENT_SECRET: ${{ secrets.GDRIVE_CLIENT_SECRET }}
+          AUTH_CODE: ${{ steps.wait-for-auth-code.outputs.auth_code }}
