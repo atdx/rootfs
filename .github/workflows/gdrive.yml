@@ -17,20 +17,20 @@ jobs:
         sudo apt-get install -y wget xz-utils fdisk
 
     - name: Download file from Google Drive
-        env:
-          GOOGLE_DRIVE_ACCESS_TOKEN: ${{ secrets.GDRIVE_TOKEN }}
-        run: |
-          # ID file Google Drive (Gantilah dengan ID file yang sesuai)
-          FILE_ID="1LPzDblSeEZN-vUHh029AffkFCdffc78r"
-          FILE_NAME="openwrt.img.xz"
+      env:
+        GOOGLE_DRIVE_ACCESS_TOKEN: ${{ secrets.GDRIVE_TOKEN }}
+      run: |
+        # ID file Google Drive (Gantilah dengan ID file yang sesuai)
+        FILE_ID="1LPzDblSeEZN-vUHh029AffkFCdffc78r"
+        FILE_NAME="openwrt.img.xz"
 
-          # URL untuk mengunduh file
-          DOWNLOAD_URL="https://www.googleapis.com/drive/v3/files/${FILE_ID}?alt=media"
+        # URL untuk mengunduh file
+        DOWNLOAD_URL="https://www.googleapis.com/drive/v3/files/${FILE_ID}?alt=media"
 
-          # Mengunduh file
-          curl -L -o $FILE_NAME \
-            -H "Authorization: Bearer $GOOGLE_DRIVE_ACCESS_TOKEN" \
-            $DOWNLOAD_URL
+        # Mengunduh file
+        curl -L -o $FILE_NAME \
+          -H "Authorization: Bearer $GOOGLE_DRIVE_ACCESS_TOKEN" \
+          $DOWNLOAD_URL
 
     - name: Extract OpenWRT image
       run: xz -d openwrt.img.xz
