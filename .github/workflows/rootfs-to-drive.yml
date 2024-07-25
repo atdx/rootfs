@@ -21,7 +21,7 @@ jobs:
         GDRIVE_TOKEN: ${{ secrets.GDRIVE_TOKEN }}
       run: |
         # ID file Google Drive (Gantilah dengan ID file yang sesuai)
-        FILE_ID="1LPzDblSeEZN-vUHh029AffkFCdffc78r"
+        FILE_ID="1ndPIwQz5lYOyuXKF2gJ20KayusJcPHOM"
         FILE_NAME="openwrt.img.xz"
 
         # URL untuk mengunduh file
@@ -37,7 +37,7 @@ jobs:
       env:
         GDRIVE_TOKEN: ${{ secrets.GDRIVE_TOKEN }} # Token akses Google Drive Anda
       run: |
-        FILE_ID="1LPzDblSeEZN-vUHh029AffkFCdffc78r" # Ganti dengan ID file Google Drive Anda
+        FILE_ID="1ndPIwQz5lYOyuXKF2gJ20KayusJcPHOM" # Ganti dengan ID file Google Drive Anda
 
         # Ambil metadata file
         METADATA=$(curl -s -H "Authorization: Bearer ${GDRIVE_TOKEN}" \
