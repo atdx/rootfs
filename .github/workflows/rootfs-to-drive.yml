@@ -1,4 +1,4 @@
-name: Rootfs Gdrive RC
+name: Rootfs Gdrive V2
 
 on:
   workflow_dispatch:
