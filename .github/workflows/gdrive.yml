@@ -1,4 +1,4 @@
-name: Rootfs Gdrive
+name: Rootfs Gdrive final
 
 on:
   workflow_dispatch:
